@@ -18,9 +18,8 @@ interface NoteFormProps {
 
 const schema = Yup.object({
   title: Yup.string().min(3).max(50).required("Title is required"),
-  content: Yup.string()
-    .max(500, "Max 500 characters")
-    .required("Content is required"),
+  // ✅ content НЕ обов’язковий
+  content: Yup.string().max(500, "Max 500 characters"),
   tag: Yup.mixed<NoteTag>()
     .oneOf(["Todo", "Work", "Personal", "Meeting", "Shopping"])
     .required("Tag is required"),
@@ -33,7 +32,7 @@ export default function NoteForm({ onCancel }: NoteFormProps) {
     mutationFn: createNote,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
-      onCancel(); 
+      onCancel();
     },
   });
 
@@ -47,7 +46,13 @@ export default function NoteForm({ onCancel }: NoteFormProps) {
     <Formik
       initialValues={initialValues}
       validationSchema={schema}
-      onSubmit={(values) => mutation.mutate(values)}
+      onSubmit={(values) => {
+        mutation.mutate({
+          title: values.title,
+          content: values.content.trim(),
+          tag: values.tag,
+        });
+      }}
     >
       <Form className={css.form}>
         <div className={css.formGroup}>
