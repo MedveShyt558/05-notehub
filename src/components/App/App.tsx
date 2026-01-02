@@ -1,15 +1,9 @@
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  keepPreviousData,
-} from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 import css from "./App.module.css";
-
-import { fetchNotes, createNote, deleteNote } from "../../services/noteService";
+import { fetchNotes } from "../../services/noteService";
 
 import NoteList from "../NoteList/NoteList";
 import SearchBox from "../SearchBox/SearchBox";
@@ -25,8 +19,6 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [debouncedSearch] = useDebounce(searchQuery, 300);
-
-  const queryClient = useQueryClient();
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -50,21 +42,6 @@ export default function App() {
     setPage(1);
   };
 
-  const createMutation = useMutation({
-    mutationFn: createNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-      closeModal();
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-  });
-
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
@@ -86,17 +63,11 @@ export default function App() {
       {isFetching && <div>Loading...</div>}
       {isError && <div>Something went wrong</div>}
 
-      {notes.length > 0 && (
-        <NoteList notes={notes} onDelete={(id) => deleteMutation.mutate(id)} />
-      )}
+      {notes.length > 0 && <NoteList notes={notes} />}
 
       {isModalOpen && (
         <Modal onClose={closeModal}>
-          <NoteForm
-            onCancel={closeModal}
-            isSubmitting={createMutation.isPending}
-            onSubmit={(values) => createMutation.mutate(values)}
-          />
+          <NoteForm onCancel={closeModal} />
         </Modal>
       )}
     </div>

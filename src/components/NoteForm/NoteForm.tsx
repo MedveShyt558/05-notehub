@@ -1,7 +1,10 @@
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 import css from "./NoteForm.module.css";
 import type { NoteTag } from "../../types/note";
+import { createNote } from "../../services/noteService";
 
 interface NoteFormValues {
   title: string;
@@ -11,19 +14,29 @@ interface NoteFormValues {
 
 interface NoteFormProps {
   onCancel: () => void;
-  onSubmit: (values: NoteFormValues) => void;
-  isSubmitting: boolean;
 }
 
 const schema = Yup.object({
   title: Yup.string().min(3).max(50).required("Title is required"),
-  content: Yup.string().max(500, "Max 500 characters"),
+  content: Yup.string()
+    .max(500, "Max 500 characters")
+    .required("Content is required"),
   tag: Yup.mixed<NoteTag>()
     .oneOf(["Todo", "Work", "Personal", "Meeting", "Shopping"])
     .required("Tag is required"),
 });
 
-export default function NoteForm({ onCancel, onSubmit, isSubmitting }: NoteFormProps) {
+export default function NoteForm({ onCancel }: NoteFormProps) {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: createNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      onCancel(); 
+    },
+  });
+
   const initialValues: NoteFormValues = {
     title: "",
     content: "",
@@ -34,7 +47,7 @@ export default function NoteForm({ onCancel, onSubmit, isSubmitting }: NoteFormP
     <Formik
       initialValues={initialValues}
       validationSchema={schema}
-      onSubmit={(values) => onSubmit(values)}
+      onSubmit={(values) => mutation.mutate(values)}
     >
       <Form className={css.form}>
         <div className={css.formGroup}>
@@ -74,10 +87,20 @@ export default function NoteForm({ onCancel, onSubmit, isSubmitting }: NoteFormP
         </div>
 
         <div className={css.actions}>
-          <button type="button" className={css.cancelButton} onClick={onCancel}>
+          <button
+            type="button"
+            className={css.cancelButton}
+            onClick={onCancel}
+            disabled={mutation.isPending}
+          >
             Cancel
           </button>
-          <button type="submit" className={css.submitButton} disabled={isSubmitting}>
+
+          <button
+            type="submit"
+            className={css.submitButton}
+            disabled={mutation.isPending}
+          >
             Create note
           </button>
         </div>

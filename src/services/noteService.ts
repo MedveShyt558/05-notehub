@@ -8,7 +8,11 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = import.meta.env.VITE_NOTEHUB_TOKEN;
+
+  
+  config.headers = config.headers ?? {};
   config.headers.Authorization = `Bearer ${token}`;
+
   return config;
 });
 
@@ -19,12 +23,8 @@ export interface FetchNotesResponse {
 
 export interface CreateNoteRequest {
   title: string;
-  content?: string;
+  content: string; 
   tag: NoteTag;
-}
-
-export interface DeleteNoteResponse {
-  id: string;
 }
 
 export const fetchNotes = async (params: {
@@ -39,6 +39,7 @@ export const fetchNotes = async (params: {
       search: params.search || undefined,
     },
   });
+
   return res.data;
 };
 
@@ -47,7 +48,8 @@ export const createNote = async (payload: CreateNoteRequest): Promise<Note> => {
   return res.data;
 };
 
-export const deleteNote = async (id: string): Promise<DeleteNoteResponse> => {
-  const res: AxiosResponse<DeleteNoteResponse> = await api.delete(`/notes/${id}`);
+
+export const deleteNote = async (id: string): Promise<Note> => {
+  const res: AxiosResponse<Note> = await api.delete(`/notes/${id}`);
   return res.data;
 };
