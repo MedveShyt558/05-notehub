@@ -18,7 +18,7 @@ interface NoteFormProps {
 
 const schema = Yup.object({
   title: Yup.string().min(3).max(50).required("Title is required"),
-  // ✅ content НЕ обов’язковий
+ 
   content: Yup.string().max(500, "Max 500 characters"),
   tag: Yup.mixed<NoteTag>()
     .oneOf(["Todo", "Work", "Personal", "Meeting", "Shopping"])
